@@ -1,0 +1,434 @@
+#include "WPILib.h"
+#include "math.h"
+#include "tgmath.h"
+class Robot: public IterativeRobot
+{
+	RobotDrive myRobot;
+	Joystick vStick;
+	Joystick rStick;
+	Joystick BM;
+	AnalogGyro gyro;
+	Encoder enc1;
+	Encoder enc2;
+	Encoder enc3;
+	Encoder enc4;
+	Encoder shooterEnc;
+	ADXRS450_Gyro Gyro1;
+	Victor w1;
+	Victor w2;
+	//Victor w3;
+	Talon w3;
+	Victor w4;
+	Victor aw1;
+	Victor aw2;
+	Talon aw3;
+	//Victor aw3;
+	Victor aw4;
+	Victor winch;
+	Victor shooter;
+	Victor kicker;
+	float throttle=0.0;
+	float pOut=0.0;
+	float dOut=0.0;
+	float error1=0.0;
+	float error2=0.0;
+	float error3=0.0;
+	float error4=0.0;
+	float ShotlastError =0.0;
+	float lastError1 =0.0;
+	float lastError2=0.0;
+	float lastError3=0.0;
+	float lastError4=0.0;
+	float Accum1 =0.0;
+	float Accum2 =0.0;
+	float Accum3 =0.0;
+	float Accum4 =0.0;
+	float reverse[4]={1.0,1.0,1.0,1.0};
+	Victor intake;
+	LiveWindow *lw;
+	float errorlong=0.0;
+	float lastThetalist[4] = {0.0,0.0,0.0,0.0};
+	int joystickmode=0;
+	float pi = 3.141592653589793238464332847;
+
+public:
+	Robot():
+		myRobot(15,16),
+		vStick(1),
+		rStick(0),
+		BM(2),
+		gyro(0),
+		enc1(0,1,false, Encoder::EncodingType::k4X),
+		enc2(2,3,false, Encoder::EncodingType::k4X),
+		enc3(4,5,false, Encoder::EncodingType::k4X),
+		enc4(6,7,false, Encoder::EncodingType::k4X),
+		shooterEnc(8,9,false, Encoder::EncodingType::k4X),
+		w1(0),
+		w2(2),
+		w3(4),
+		w4(6),
+		aw1(1),
+		aw2(3),
+		aw3(5),
+		aw4(7),
+		winch(8),
+		shooter(11),
+		kicker(10),
+		intake(9),
+		lw(LiveWindow::GetInstance())
+	{
+		myRobot.SetExpiration(0.1);
+	}
+private:
+	void AutonomousInit()
+	{
+
+	}
+
+	void AutonomousPeriodic()
+	{
+
+	}
+
+	void TeleopInit()
+	{
+		gyro.Reset();
+		Gyro1.GetAngle();
+		//enc1.Reset();
+		//enc2.Reset();
+		//enc3.Reset();
+		//enc4.Reset();
+
+	}
+
+	void TeleopPeriodic()
+	{
+		//Swerve();
+		joystick();
+		winchFunc();
+		intakeFunc();
+		openloopShooter();
+		SmartDashboard::PutNumber("gyro",fmod(gyro.GetAngle()/180*pi,pi*2));
+
+
+
+
+	}
+	void winchFunc()
+	{
+		if(BM.GetRawButton(1)==true)
+		{
+			gyro.Reset();
+		}
+		if(BM.GetRawButton(4) == true){
+			winch.Set(.9);
+		}
+		else if(BM.GetRawButton(2)==true){
+			winch.Set(-.75);
+		}
+		else{
+			winch.Set(0);
+		}
+	}
+	void openloopShooter()
+	{
+		if(BM.GetRawButton(5)==true)
+		{
+			throttle=throttle+.005;
+		}
+		if(BM.GetRawButton(7)==true)
+		{
+			throttle=throttle-.005;
+		}
+		float rpmSetPoint = 2400 + (throttle * 600);
+		float uThrottle = rpmSetPoint*.0002+0.0304;
+		if(BM.GetRawButton(8)==true)
+		{
+			shooter.Set(uThrottle);
+		}
+		else
+		{
+			shooter.Set(0.0);
+		}
+		if(BM.GetRawButton(3) == true){
+			kicker.Set(.75);
+		}
+		else{
+			kicker.Set(0.0);
+		}
+		SmartDashboard::PutNumber("throttle",throttle);
+
+
+	}
+	void Shooter()
+	{
+
+		float throttle = vStick.GetThrottle();
+		float rpm = ((shooterEnc.GetRate() * 60)/48);
+		float AverageRPM = rpm;
+		//rpmtable[bufferIndex]= rpm;
+		//for (int i = 0; i<Buffer ; i++)
+		//{
+		//	AverageRPM = AverageRPM + rpmtable[i];
+		//	SmartDashboard::PutNumber("Rpmtable",rpmtable[i]);
+		//}
+		//AverageRPM = AverageRPM/Buffer;
+		// This makes range from 2400 - 3000
+		float rpmSetPoint = 2400 + (1+throttle)/2 * 600;
+		float Shoterror = rpmSetPoint-AverageRPM;
+		ShotlastError = Shoterror;
+		float iErrorLim =1000;
+		float kP = SmartDashboard::GetNumber("kP",.000925);
+		float kI = SmartDashboard::GetNumber("kI",.0009);
+		float kD = SmartDashboard::GetNumber("kD",.0000009);
+
+		//All Forms of Error
+
+		float iError = iError + Shoterror/1000;
+		float dError = (Shoterror - ShotlastError);
+
+		// Cap iError
+		if(iError > iErrorLim){
+			iError = iErrorLim;
+		}
+		else if(iError < -iErrorLim){
+			iError = -iErrorLim;
+		}
+
+		// Scale Controller Errors
+		float uThrottle = rpmSetPoint*.0002+0.0304;
+		float uI = iError * kI;
+		float uP = Shoterror * kP;
+		float uD = dError * kD;
+		float uAll = uP + uI + uD + uThrottle;
+
+		if(uAll > 1){
+			uAll = 1;
+		}
+		else if(uAll < -1){
+			uAll = -1;
+		}
+
+		float outcome = uAll;
+		if(BM.GetRawButton(3) == true){
+			kicker.Set(.75);
+		}
+		else{
+			kicker.Set(0.0);
+		}
+		shooter.Set(outcome);
+
+
+	}
+	void intakeFunc(){
+		if(BM.GetRawButton(1) == true){
+			intake.Set(.75);
+		}
+		else{
+			intake.Set(0);
+		}
+	}
+	void joystick()
+	{
+		float x = rStick.GetX();
+		float y = -rStick.GetY();
+		float w = -vStick.GetX();
+		float offset =  pi;
+		if(x<.05 && x > -.05)
+		{
+			x=0;
+		}
+		if(y<.05 && y> -.05)
+		{
+			y=0;
+		}
+		if(w<.07 && w>-.07)
+		{
+			w=0.0;
+		}
+		float Theta;
+		float M = sqrt(x*x+y*y);
+		if(x < 0)
+		{
+			Theta = atan2(x,y) + 2*3.14159;
+		}
+		else
+		{
+			Theta = atan2(x,y);
+		}
+		y=sin(Theta)*M;
+		x=cos(Theta)*M;
+		swerve(x,y,w);
+	}
+	void swerve(float x,float y,float w)
+	{
+
+		w=w/30;
+		float x1 = 23.5;
+		float y2 =26.0;
+		float V1x = x + w * x1/2.0;
+		float V1y = y - w * y2/2.0;
+		float V2x = x  - w * x1/2.0;
+		float V2y = y - w * y2/2.0;
+		float V3x = x - w * x1/2.0;
+		float V3y = y + w * y2/2.0;
+		float V4x = x + w * x1/2.0;
+		float V4y = y + w * y2/2.0;
+		float Theta1 = getTheta(x,y,w,V1x,V1y,0);
+		float Theta2 = getTheta(x,y,w,V2x,V2y,1);
+		float Theta3 = getTheta(x,y,w,V3x,V3y,2);
+		float Theta4 = getTheta(x,y,w,V4x,V4y,3);
+		float V1 = sqrt(V1x*V1x+V1y*V1y);
+		float V2 = sqrt(V2x*V2x+V2y*V2y);
+		float V3 = sqrt(V3x*V3x+V3y*V3y);
+		float V4 = sqrt(V4x*V4x+V4y*V4y);
+		float encAngle1 = fmod(((enc1.Get()/497.0) *(2*3.141596)) * (32.0/36.0),(3.14159265*2));
+		float encAngle2 = fmod(((enc2.Get()/497.0) *(2*3.141596)) * (32.0/36.0),(3.14159265*2));
+		float encAngle3 = fmod(((enc3.Get()/497.0) *(2*3.141596)) * (32.0/36.0),(3.14159265*2));
+		float encAngle4 = fmod(((enc4.Get()/497.0) *(2*3.141596)) * (32.0/36.0),(3.14159265*2));
+		lastError1=error1;
+		lastError2=error2;
+		lastError3=error3;
+		lastError4=error4;
+		error1=getError(Theta1,encAngle1,0);
+		error2=getError(Theta2,encAngle2,1);
+		error3=getError(Theta3,encAngle3,2);
+		error4=getError(Theta4,encAngle4,3);
+		Accum1=Accum1+error1;
+		Accum2=Accum2+error2;
+		Accum3=Accum3+error3;
+		Accum4=Accum4+error4;
+		aw1.Set(pidAngle(error1,Accum1,lastError1));
+		aw2.Set(pidAngle(error2,Accum2,lastError2));
+		aw3.Set(pidAngle(error3,Accum3,lastError3));
+		aw4.Set(pidAngle(error4,Accum4,lastError4));
+		w1.Set(V1 );//* reverse[0]);
+		w2.Set(V2 );//* reverse[1]);
+		w3.Set(V3 );//* reverse[2]);
+		w4.Set(V4 );//* reverse[3]);
+
+
+		SmartDashboard::PutNumber("error1",error1);
+		SmartDashboard::PutNumber("EncAngle", encAngle1);
+		SmartDashboard::PutNumber("Accum1",Accum1);
+		SmartDashboard::PutNumber("Error Long", errorlong);
+		SmartDashboard::PutNumber("outcome",pidAngle(error1,Accum1,lastError1) );
+		SmartDashboard::PutNumber("joystickmode",joystickmode);
+
+		SmartDashboard::PutNumber("encraw",enc1.Get());
+		SmartDashboard::PutNumber("V3x",V3x);
+		SmartDashboard::PutNumber("V3y",V3y);
+		SmartDashboard::PutNumber("V3",V3);
+		SmartDashboard::PutNumber("Teta3",Theta3);
+		SmartDashboard::PutNumber("x",x);
+		SmartDashboard::PutNumber("y",y);
+		SmartDashboard::PutNumber("w",w);
+		SmartDashboard::PutNumber("reverse1",reverse[0]);
+		SmartDashboard::PutNumber("reverse2",reverse[1]);
+		SmartDashboard::PutNumber("reverse3",reverse[2]);
+		SmartDashboard::PutNumber("reverse4",reverse[3]);
+	}
+
+float getError(float Theta,float encAngle, int idx)
+{
+	float error = Theta - encAngle;
+	if(error>3.1415926535){
+		errorlong = error-2*3.14159265358979323846264388;
+	}
+	else if(error < -3.14159265358979){
+		errorlong = error+2*3.14159265358979323846264388;
+	}
+	else{
+		errorlong = error;
+	}
+	float errorneg = (Theta+3.141592) - encAngle;
+	float errorlongneg=0.0;
+	if(errorneg>3.1415926535){
+		errorlongneg = error-2*3.14159265358979323846264388;
+	}
+	else if(errorneg < -3.14159265358979){
+		errorlongneg = error+2*3.14159265358979323846264388;
+	}
+	else{
+		errorlongneg = errorneg;
+	}
+
+	if(abs(errorlong) < abs(errorlongneg) )
+	{
+		reverse[idx] = 1.0;
+		//return errorlong;
+	}
+	else
+	{
+		reverse[idx] =-1.0;
+		//return errorlongneg * -1;
+	}
+	return errorlong;
+
+}
+float getTheta(float x,float y,float w,float Vx,float Vy,int idx)
+{
+	float Theta;
+	if(rStick.GetRawButton(1)==true)
+	{
+		Theta=0.0;
+	}
+	else if(rStick.GetRawButton(8)==true)
+	{
+		Theta=3.141593;
+	}
+	else if(rStick.GetRawButton(10)==true)
+	{
+		Theta = 3.141592*.5;
+	}
+	else if(x==0 && y==0 && w==0)
+	{
+		Theta = lastThetalist[idx];
+	}
+	else
+	{
+		if(Vx < 0)
+		{
+			Theta = atan2(Vx,Vy) + 2*3.14159;
+		}
+		else
+		{
+			Theta = atan2(Vx,Vy);
+		}
+		lastThetalist[idx]=Theta;
+	}
+	return Theta;
+}
+float pidAngle(float error,float Accum, float lastError){
+
+	float kP = 1.5;
+	float kI = .000;
+	float kD = .0;
+	float dError = error - lastError;
+	pOut = error * kP;
+	if(Accum>10)
+	{
+		Accum=10;
+	}
+	float iOut = Accum * kI;
+	dOut = dError * kD;
+	float outcome = pOut + dOut + iOut;
+	if(outcome > 1)
+	{
+		outcome = 1;
+	}
+	else if(outcome < -1)
+	{
+		outcome = -1;
+	}
+	return outcome;
+	}
+	void TestPeriodic()
+	{
+		lw->Run();
+	}
+
+
+};
+
+START_ROBOT_CLASS(Robot)

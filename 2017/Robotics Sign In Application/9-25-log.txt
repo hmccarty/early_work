@@ -1,0 +1,40 @@
+Enter Student ID or Scan Card then Hit Enter: 222008740
+Enter Student ID or Scan Card then Hit Enter: 715006252
+Enter Student ID or Scan Card then Hit Enter: 71500691
+Please Enter Your Name: 346715006517
+Enter Student ID or Scan Card then Hit Enter: 715006517
+Please Enter Your Name: 715006517
+Enter Student ID or Scan Card then Hit Enter: 715007997
+Enter Student ID or Scan Card then Hit Enter: 222002071
+Enter Student ID or Scan Card then Hit Enter: 222003302
+Please Enter Your Name: hayes
+Enter Student ID or Scan Card then Hit Enter: 222008764
+Enter Student ID or Scan Card then Hit Enter: 715006321
+Enter Student ID or Scan Card then Hit Enter: 715006498
+Enter Student ID or Scan Card then Hit Enter: 223005223
+Enter Student ID or Scan Card then Hit Enter: 222004719
+Enter Student ID or Scan Card then Hit Enter: 222001733
+Enter Student ID or Scan Card then Hit Enter: 222001471
+Enter Student ID or Scan Card then Hit Enter: 222006443
+Enter Student ID or Scan Card then Hit Enter: 222001571
+Enter Student ID or Scan Card then Hit Enter: 270600249
+Please Enter Your Name: test
+Enter Student ID or Scan Card then Hit Enter: 222002178
+Enter Student ID or Scan Card then Hit Enter: 715007681
+Enter Student ID or Scan Card then Hit Enter: 715005266
+Enter Student ID or Scan Card then Hit Enter: 223004855
+Enter Student ID or Scan Card then Hit Enter: 715007609
+Enter Student ID or Scan Card then Hit Enter: 222001447
+Enter Student ID or Scan Card then Hit Enter: 222003240
+Enter Student ID or Scan Card then Hit Enter: 222001594
+Enter Student ID or Scan Card then Hit Enter: 222006008
+Enter Student ID or Scan Card then Hit Enter: 222004926
+Enter Student ID or Scan Card then Hit Enter: 270600010
+Enter Student ID or Scan Card then Hit Enter: 223005690
+Enter Student ID or Scan Card then Hit Enter: 222003164
+Please Enter Your Name: Mary
+Enter Student ID or Scan Card then Hit Enter: 715006322
+Enter Student ID or Scan Card then Hit Enter: 715005025
+Enter Student ID or Scan Card then Hit Enter: 715006282
+Enter Student ID or Scan Card then Hit Enter: 715006552
+Enter Student ID or Scan Card then Hit Enter: 
