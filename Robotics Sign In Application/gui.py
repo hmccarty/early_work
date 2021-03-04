@@ -7,17 +7,17 @@ from oauth2client.service_account import ServiceAccountCredentials
 scope = ["https://spreadsheets.google.com/feeds"] #Gets access to Google Sheets Document (the database)
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json',scope)
 client= gspread.authorize(creds)
-sheet = client.open("Robotics Sign In 2017-18").sheet1
+sheet = client.open("Robotics Sign In").sheet1
 rowNumber =1
 allStudentIDs = sheet.col_values(3)
 totalMeetings = sheet.cell(2,1).value
 
-def timeStamp(day, rowNumber): #Funciton used to add exact time to when the indvidual signed in
+def timeStamp(day, rowNumber): #Function used to add exact time to when the indvidual signed in
         time = strftime("%H:%M:%S")
         sheet.update_cell(rowNumber,day,time)
         
 def mainFunction(rowNumber,inputStudentID,allStudentIDs,totalMeetings):
-    day = int(totalMeetings)+5 #Changes what column your on depending on what totalMeetings is set too
+    day = int(totalMeetings)+5 #Changes what column you're on depending on what totalMeetings is set too
     dayCell = sheet.cell(1,int(totalMeetings)+5).value
     for currentStudentID in allStudentIDs:
         if inputStudentID == currentStudentID and rowNumber>1:
